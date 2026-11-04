@@ -1,7 +1,9 @@
 # Tandem LLD: Quarkus write-side extension (`quarkus-tandem-producer`)
 
 **Version:** 0.1  
-**Status:** Designed, not implemented. First release scope only: the plain and template tiers.  
+**Status:** Being implemented in `extensions/quarkus-tandem` (staged until the Quarkiverse repository exists):
+`runtime`, `deployment` and its tests done; the integration-test modules, native mode, CI and docs to come.
+First release scope only: the plain and template tiers.  
 **Implements:** [HLD-quarkus.md](HLD-quarkus.md) v0.4  
 **Companion to:** [LLD-spring-producer.md](LLD-spring-producer.md); [LLD-spring-config.md](LLD-spring-config.md) §2;
 [LLD-bucket-count-guard.md](LLD-bucket-count-guard.md); [LLD-rabbitmq.md](LLD-rabbitmq.md) §9;
@@ -308,6 +310,10 @@ Registers, by class name (the deployment module never loads the runtime classes)
 | `TandemOutboxRepository` | always | yes: the recorder looks it up programmatically |
 | `DefaultTransactionalOutboxTemplate` | always | no: removed if the application never injects it |
 | `TracePropagatorProducer` (§10) | always | yes: the recorder looks the `TracePropagator` up programmatically |
+
+The `TracePropagator` **bean type** is also made unremovable (`UnremovableBeanBuildItem.beanTypes`): the
+recorder's programmatic lookup is invisible to ArC, which would otherwise remove an application's
+replacement bean as unused and resolve the extension's default instead.
 | `JacksonPayloadSerializerProducer` (§9) | `capabilities.isPresent(Capability.JACKSON)` | no: the template's `Instance` injection point keeps it |
 | `OtelTracePropagatorProducer` (§10) | `capabilities.isPresent(Capability.OPENTELEMETRY_TRACER)` **and** `QuarkusClassLoader.isClassPresentAtRuntime("com.codingful.tandem.tracing.otel.OtelTracePropagator")` | no: the trace capture's `Instance` injection point keeps it |
 
@@ -382,8 +388,8 @@ The extension does nothing at static init. At runtime init, once every migration
 application's startup:
 
 1. **The datasource key has not changed.** The runtime value of `tandem.outbox.datasource`, read with
-   `ConfigProvider.getConfig().getOptionalValue(...)`, is absent, equal to the build-time name, or empty
-   while the build-time name is the default datasource. Otherwise `TandemConfigurationException` (S1)
+   `ConfigProvider.getConfig().getOptionalValue(...)`, is absent or equal to the build-time name.
+   MicroProfile Config reads an empty value as absent, so an empty key means the default datasource. Otherwise `TandemConfigurationException` (S1)
    naming both values (HLD §6.1).
 2. **No transaction is active.** `TransactionManager.getStatus()` is `STATUS_NO_TRANSACTION`; otherwise
    `TandemConfigurationException` (S2); a `SystemException` becomes S3. The guard commits a transaction
@@ -445,10 +451,10 @@ one rule and one text across every process.
 **Keys of other roles start the application as they are** (HLD §6.1). `tandem.relay.*` and
 `tandem.kafka.*` lie outside every prefix the extension maps, so nothing reads or validates them.
 `tandem.tracing.publish-span`, the relay's span switch, lies inside the `tandem.tracing` prefix, where
-SmallRye's check that a mapping covers every name under its prefix
-(`quarkus.config.mapping.validate-unknown`) could refuse it. A test pins the behaviour
-(`OtherRoleKeysTest`, §13.2); if the check applies, `TandemTracingRuntimeConfig` declares
-`publishSpan()` as an `Optional<Boolean>` whose description says the write side ignores it. The
+SmallRye's check that a mapping covers every name under its prefix refuses it (`SRCFG00050 … does
+not map to any root`), so `TandemTracingRuntimeConfig` declares `publishSpan()` as an
+`Optional<Boolean>` whose description says the write side ignores it. `OtherRoleKeysTest` (§13.2) pins
+the behaviour. The
 extension never asks the application to turn that check off.
 
 ### 8.3 Documentation
@@ -926,5 +932,3 @@ or §5.6 requires.
 
 - **When to file the Quarkiverse extension proposal** (HLD §14). This document and the HLD are what it
   describes.
-- **Whether `tandem.tracing.publish-span` needs a declaration** in the tracing mapping (§8.2). Settled
-  by `OtherRoleKeysTest` in the first implementation step; either outcome is decided above.

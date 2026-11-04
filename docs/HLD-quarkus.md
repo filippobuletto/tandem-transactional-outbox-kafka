@@ -1,7 +1,8 @@
 # Tandem: Quarkus Extension
 
 **Version:** 0.4  
-**Status:** Accepted. Designed and prototyped on Quarkus 3.40, not implemented.  
+**Status:** Accepted. Plain and template tiers implemented in `extensions/quarkus-tandem`, staged there until
+the Quarkiverse repository exists (§14).  
 **Detailed in:** [LLD-quarkus.md](LLD-quarkus.md)  
 **Companion to:** [HLD.md](HLD.md) §1.1, §1.3, §1.4, §3.2, §4.2;
 [LLD-spring-producer.md](LLD-spring-producer.md); [LLD-spring-config.md](LLD-spring-config.md) §2, §3;
@@ -639,4 +640,7 @@ extension wrote to, and checks the events arrive on the broker.
 ## 14. Open points
 
 - **When to file the Quarkiverse extension proposal.** A public step; this document is what it would
-  describe.
+  describe. Until then the code is staged in this repository's `extensions/quarkus-tandem`, with the
+  hub's Maven build and formatting rather than this repository's, so that moving it is a history split
+  and no rewrite (§13 rejects a module on this repository's build, not code waiting here for its
+  repository).
