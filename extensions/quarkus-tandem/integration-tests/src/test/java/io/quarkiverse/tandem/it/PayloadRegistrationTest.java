@@ -21,8 +21,8 @@ class PayloadRegistrationTest {
 
         when().post("/payloads/registered/{orderId}", orderId).then().statusCode(204);
 
-        OutboxRowsResource.Row[] rows = when().get("/rows/{aggregateId}", orderId)
-                .then().statusCode(200).extract().as(OutboxRowsResource.Row[].class);
+        OutboxRows.Row[] rows = when().get("/rows/{aggregateId}", orderId)
+                .then().statusCode(200).extract().as(OutboxRows.Row[].class);
         assertThat(rows).singleElement().satisfies(row -> assertThat(row.payload()).contains(orderId));
     }
 
@@ -33,8 +33,8 @@ class PayloadRegistrationTest {
 
         when().post("/payloads/unregistered/{orderId}", orderId).then().statusCode(PayloadResource.SERIALIZATION_FAILED);
 
-        OutboxRowsResource.Row[] rows = when().get("/rows/{aggregateId}", orderId)
-                .then().statusCode(200).extract().as(OutboxRowsResource.Row[].class);
+        OutboxRows.Row[] rows = when().get("/rows/{aggregateId}", orderId)
+                .then().statusCode(200).extract().as(OutboxRows.Row[].class);
         assertThat(rows).isEmpty();
     }
 }

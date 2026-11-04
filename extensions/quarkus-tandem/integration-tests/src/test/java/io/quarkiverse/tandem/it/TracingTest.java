@@ -31,8 +31,8 @@ class TracingTest {
         TracingResource.Written written = given().when().post("/tracing/{orderId}/{correlationId}", ORDER_ID, CORRELATION_ID)
                 .then().statusCode(200).extract().as(TracingResource.Written.class);
 
-        OutboxRowsResource.Row[] rows = when().get("/rows/{aggregateId}", ORDER_ID)
-                .then().statusCode(200).extract().as(OutboxRowsResource.Row[].class);
+        OutboxRows.Row[] rows = when().get("/rows/{aggregateId}", ORDER_ID)
+                .then().statusCode(200).extract().as(OutboxRows.Row[].class);
 
         assertThat(rows).hasSize(1);
         Map<String, String> headers = new ObjectMapper().readValue(rows[0].headers(), new TypeReference<>() {
