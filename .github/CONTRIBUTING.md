@@ -173,7 +173,11 @@ tree. Build and test it from its directory, on JDK 17, with Docker running:
 cd extensions/quarkus-tandem
 mvn verify                           # formats the sources, then runs every test
 mvn verify -Dquarkus.version=3.40.0  # the Quarkus minimum
+mvn verify -Dno-format               # checks the formatting instead of rewriting it, as CI does
 ```
+
+`.github/workflows/quarkus-extension.yml` runs it on the Quarkus and JDK matrix, and natively (the
+`*IT` classes against the executables), whenever a change touches that directory.
 
 ## Project layout
 

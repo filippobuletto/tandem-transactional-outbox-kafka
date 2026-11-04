@@ -1,0 +1,65 @@
+name: Quarkus extension
+
+# The Quarkus extension staged in extensions/quarkus-tandem is a Maven build outside Gradle, so ci.yml never
+# builds it (LLD-quarkus §14). It moves to its own Quarkiverse repository with this workflow's jobs.
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'extensions/quarkus-tandem/**', '.github/workflows/quarkus-extension.yml' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ 'extensions/quarkus-tandem/**', '.github/workflows/quarkus-extension.yml' ]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: extensions/quarkus-tandem
+
+jobs:
+  jvm:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # JDK 17 runs the tests, not only the compiler target: bytecode for 17 does not prove it runs there.
+          - { java: 17, quarkus: '3.40.0' }   # the line's minimum
+          - { java: 17, quarkus: '' }         # the version pinned in pom.xml
+          - { java: 25, quarkus: '' }         # the newest runtime the line supports
+    name: jvm (JDK ${{ matrix.java }}, Quarkus ${{ matrix.quarkus || 'pinned' }})
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - uses: ./.github/actions/docker-hub-mirror
+
+      # -Dno-format turns the hub's formatter from rewriting the sources into checking them.
+      - name: Build and test
+        run: mvn -B verify -Dno-format ${{ matrix.quarkus && format('-Dquarkus.version={0}', matrix.quarkus) || '' }}
+
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - uses: ./.github/actions/docker-hub-mirror
+
+      # Built in the line's default Mandrel builder image, so this repository chooses no GraalVM version;
+      # the *IT classes then run against the executables.
+      - name: Build native executables and run their tests
+        run: >-
+          mvn -B verify -Dno-format -Dnative -Dquarkus.native.container-build=true
+          -pl integration-tests,integration-tests-minimal -am
