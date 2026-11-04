@@ -1,0 +1,74 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-tandem-producer_tandem-outbox-datasource]] [.property-path]##link:#quarkus-tandem-producer_tandem-outbox-datasource[`+++tandem.outbox.datasource+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++tandem.outbox.datasource+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The Agroal datasource the outbox rows are written to, the default datasource when unset. The business tables belong on the same datasource: only then do the business change and the outbox row commit together. Fixed at build time; the application refuses to start when the runtime value differs.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++TANDEM_OUTBOX_DATASOURCE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++TANDEM_OUTBOX_DATASOURCE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-tandem-producer_tandem-outbox-bucket-count]] [.property-path]##link:#quarkus-tandem-producer_tandem-outbox-bucket-count[`+++tandem.outbox.bucket-count+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++tandem.outbox.bucket-count+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The number of buckets the outbox rows are spread over. Must be identical in every writer and in the relay: the first process to start records it in the database, and a process configured with another value refuses to start.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++TANDEM_OUTBOX_BUCKET_COUNT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++TANDEM_OUTBOX_BUCKET_COUNT+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|`+++256+++`
+
+a| [[quarkus-tandem-producer_tandem-outbox-wakeup]] [.property-path]##link:#quarkus-tandem-producer_tandem-outbox-wakeup[`+++tandem.outbox.wakeup+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++tandem.outbox.wakeup+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How the relay learns that rows were written: `none` (it polls) or `pg-notify` (each insert notifies it through PostgreSQL). A setting of the writer and relay pair; set the same value in both.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++TANDEM_OUTBOX_WAKEUP+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++TANDEM_OUTBOX_WAKEUP+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`none`, `pg-notify`
+|`+++none+++`
+
+|===
+

@@ -1,0 +1,197 @@
+= Tandem Producer
+
+include::./includes/attributes.adoc[]
+
+:design: https://github.com/alirux/tandem-transactional-outbox-kafka/blob/main/docs
+
+Write events to the https://tandem.codingful.com[Tandem] transactional outbox in the same JTA transaction
+as the business change. The outbox rows commit or roll back with your data, and the `tandem-relay` image,
+deployed beside your service against the same database, publishes them to Kafka in write order.
+
+The extension is the write side only. It never brings the Kafka client, the CloudEvents SDK or a JSON
+binding your application did not already choose. The design is in {design}/HLD-quarkus.md[HLD-quarkus]
+and {design}/LLD-quarkus.md[LLD-quarkus].
+
+== Installation
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.tandem</groupId>
+    <artifactId>quarkus-tandem-producer</artifactId>
+    <version>{project-version}</version>
+</dependency>
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-jdbc-postgresql</artifactId>
+</dependency>
+----
+
+The extension depends on Tandem {tandem-floor} or later; importing a later `com.codingful:tandem-bom`
+raises it. It runs on Quarkus {quarkus-line}, from {quarkus-minimum}, and Java 17 or later.
+
+== The guarantee and its scope
+
+The business change and the outbox row commit together when **both are on the same Agroal datasource,
+with JTA transactions enabled**: the default datasource, or the one `tandem.outbox.datasource` names.
+Inside a transaction Agroal hands both the connection enlisted for that datasource.
+
+A business change on another datasource or resource is outside the guarantee: keep your business tables
+and the outbox on one datasource.
+
+The build fails when the outbox datasource does not exist, is not PostgreSQL, or has
+`quarkus.datasource.jdbc.transactions=disabled`. Every insert refuses to run outside an active JTA
+transaction, so a row can never autocommit apart from your data.
+
+== Writing events
+
+=== Plain tier
+
+Inject `OutboxRepository` and insert in your own `@Transactional` method:
+
+[source,java]
+----
+@Inject OutboxRepository outbox;
+
+@Transactional
+public void place(Order order) {
+    orders.persist(order);
+    outbox.insert(OutboxMessage.builder()
+            .aggregateType("Order")
+            .aggregateId(order.id())
+            .seq(order.version())
+            .payload(json(order))
+            .build());
+}
+----
+
+=== Template tier
+
+`TransactionalOutboxTemplate` joins the caller's transaction or starts one, runs your work, and inserts
+what it recorded, in recording order, in that transaction:
+
+[source,java]
+----
+@Inject TransactionalOutboxTemplate template;
+
+public OrderId place(PlaceOrder command) {
+    return template.execute(outbox -> {
+        Order order = orders.create(command);
+        outbox.record("Order", order.id(), order.version(), new OrderPlaced(order.id()));
+        return order.id();
+    });
+}
+----
+
+`record(...)` serializes an object payload with the `PayloadSerializer` bean: with `quarkus-jackson`
+present, your application's own `ObjectMapper`. Without one, `record(...)` fails at the call and
+`add(OutboxMessage)` still works. Declare your own `PayloadSerializer` bean to replace the default.
+
+=== When a failure is caught
+
+A failure is thrown to the caller; Tandem never marks the transaction rollback-only itself. What can
+still commit depends on where you catch it:
+
+* **Inside the transactional work**, before any SQL ran (serialization, a refused write): the
+  transaction stays committable, and committing it is your choice to go on without that event.
+* **Around `execute`**: the exception has crossed the template's transaction boundary. The template has
+  rolled back the transaction it started, or marked the one it joined rollback-only. Catching it does not
+  bring the commit back.
+* **After an SQL failure**, wherever it is caught: PostgreSQL has aborted the transaction, which can only
+  roll back.
+
+In the last two cases a `@Transactional` method that catches the exception and returns **returns
+normally while nothing is committed**. Unlike Spring, Quarkus rolls back a transaction marked
+rollback-only without throwing, and PostgreSQL's driver reports nothing when it rolls back the `COMMIT`
+of an aborted transaction.
+
+=== Ordering
+
+Tandem publishes an aggregate's rows in the order they commit. Two transactions writing to the same
+aggregate publish in business order only when they are serialized: lock the aggregate row before the
+insert, or build the message with `lockedWrite()`, which takes a transaction-scoped lock on the aggregate
+id. Hibernate advances `@Version` at flush, so flush before reading the version you use as `seq`, or use
+`managedSeq()` / `unsequenced()`.
+
+== Schema and migrations
+
+Your application owns its migrations; the extension never applies the schema. It checks the bucket count
+after your migrations at start have run, and refuses any write until then.
+
+=== Liquibase
+
+Include Tandem's changelog from the `tandem-jdbc` jar, and keep your own changes in a file of their own,
+after it:
+
+[source,xml]
+----
+<databaseChangeLog ...>
+    <include file="tandem/schema/postgres/changelog/db.changelog-master.xml"/>
+    <include file="db/app/changes.xml"/>
+</databaseChangeLog>
+----
+
+[source,properties]
+----
+quarkus.liquibase.migrate-at-start=true
+quarkus.liquibase.change-log=db/changelog.xml
+----
+
+Upgrading Tandem applies only the changesets your database has not recorded.
+
+=== Flyway
+
+Copy Tandem's SQL files (`tandem/schema/postgres/changelog/v<n>-*.sql` in the `tandem-jdbc` jar, or
+`schema/postgres/changelog/` of the release) into your migrations **byte for byte**, each as your next
+version: `V7__tandem_v1_baseline.sql`, `V8__tandem_v2_replays.sql`, and so on. Upgrading Tandem copies
+the files of the schema versions you do not have yet, as your next versions. Running them from the jar
+instead would put Tandem's versions below ones you already applied.
+
+=== Dev Services
+
+With the migration included, `quarkus dev` and your tests start PostgreSQL through Dev Services and run
+end to end.
+
+== Tracing
+
+With `tandem.tracing.enabled=true`, each row records the correlation id from the logging MDC (under
+`tandem.tracing.correlation-id-mdc-key`, read from JBoss Logging's MDC, which SLF4J writes too), falling
+back to `TandemContext`. To also record the trace context, add `quarkus-opentelemetry` and:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>com.codingful</groupId>
+    <artifactId>tandem-tracing-otel</artifactId>
+</dependency>
+----
+
+The context is written through the propagators you configured (`traceparent` with Quarkus's default).
+With OpenTelemetry present and that artifact missing, startup logs one warning and rows carry the
+correlation id only. A `TracePropagator` bean of your own replaces all of this.
+
+== Native mode
+
+The extension works in native mode. **Register your payload types for reflection**
+(`@RegisterForReflection`): a type that appears only as an outbox payload is registered by nothing else,
+and with Quarkus's default `ObjectMapper` its serialization fails at runtime. A `PayloadSerializer` that
+needs no reflection is the other way out.
+
+== The relay
+
+Run the `ghcr.io/alirux/tandem-relay` image against the same database, with the same
+`tandem.outbox.bucket-count` (`TANDEM_OUTBOX_BUCKET_COUNT`) and `tandem.outbox.wakeup` as the service. The
+same `application.properties` may carry `tandem.relay.*` and `tandem.kafka.*` keys: the extension ignores
+them.
+
+== Not supported
+
+The reactive stack (Hibernate Reactive, the Vert.x SQL clients) does not use JDBC transactions, so the
+extension cannot join them. MySQL is not supported until Tandem's engine supports it.
+
+[[extension-configuration-reference]]
+== Configuration reference
+
+include::includes/quarkus-tandem-producer_tandem.outbox.adoc[leveloffset=+1, opts=optional]
+
+include::includes/quarkus-tandem-producer_tandem.tracing.adoc[leveloffset=+1, opts=optional]

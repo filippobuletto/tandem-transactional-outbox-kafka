@@ -1,0 +1,5 @@
+name: quarkus-tandem
+title: Tandem Producer
+version: dev
+nav:
+  - modules/ROOT/nav.adoc

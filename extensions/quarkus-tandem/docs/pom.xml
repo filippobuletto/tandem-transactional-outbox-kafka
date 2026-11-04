@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.quarkiverse.tandem</groupId>
+        <artifactId>quarkus-tandem-parent</artifactId>
+        <version>999-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>quarkus-tandem-docs</artifactId>
+    <name>Quarkus Tandem - Documentation</name>
+    <packaging>pom</packaging>
+
+    <dependencies>
+        <!-- Builds the extension first, so its configuration model exists; brings nothing to the classpath -->
+        <dependency>
+            <groupId>io.quarkiverse.tandem</groupId>
+            <artifactId>quarkus-tandem-producer-deployment</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- The configuration reference the guide includes, generated from the javadoc of the mappings
+                 (LLD-quarkus §8.3) -->
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-config-doc-maven-plugin</artifactId>
+                <version>${quarkus.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>default-generate-config-doc</id>
+                        <goals>
+                            <goal>generate-config-doc</goal>
+                        </goals>
+                        <configuration>
+                            <targetDirectory>${project.basedir}/modules/ROOT/pages/includes/</targetDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

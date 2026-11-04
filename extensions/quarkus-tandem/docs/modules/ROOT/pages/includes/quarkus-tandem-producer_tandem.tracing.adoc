@@ -1,0 +1,74 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a| [[quarkus-tandem-producer_tandem-tracing-enabled]] [.property-path]##link:#quarkus-tandem-producer_tandem-tracing-enabled[`+++tandem.tracing.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++tandem.tracing.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether each insert records the current trace context (with `quarkus-opentelemetry` and `com.codingful:tandem-tracing-otel`) and the correlation id on the outbox row. An application `TracePropagator` bean is used whatever this says.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++TANDEM_TRACING_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++TANDEM_TRACING_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a| [[quarkus-tandem-producer_tandem-tracing-correlation-id-mdc-key]] [.property-path]##link:#quarkus-tandem-producer_tandem-tracing-correlation-id-mdc-key[`+++tandem.tracing.correlation-id-mdc-key+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++tandem.tracing.correlation-id-mdc-key+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The logging MDC key the correlation id is read from.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++TANDEM_TRACING_CORRELATION_ID_MDC_KEY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++TANDEM_TRACING_CORRELATION_ID_MDC_KEY+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++correlationId+++`
+
+a| [[quarkus-tandem-producer_tandem-tracing-publish-span]] [.property-path]##link:#quarkus-tandem-producer_tandem-tracing-publish-span[`+++tandem.tracing.publish-span+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++tandem.tracing.publish-span+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The relay's switch for its publish span. The write side ignores it; it is declared so that a configuration shared with the relay starts the application as it is.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++TANDEM_TRACING_PUBLISH_SPAN+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++TANDEM_TRACING_PUBLISH_SPAN+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|
+
+|===
+

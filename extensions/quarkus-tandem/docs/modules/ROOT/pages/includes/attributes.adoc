@@ -1,0 +1,4 @@
+:project-version: 1.0.0
+:tandem-floor: 1.0.0
+:quarkus-line: 3.40 LTS
+:quarkus-minimum: 3.40.0
