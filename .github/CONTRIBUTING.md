@@ -174,7 +174,12 @@ cd extensions/quarkus-tandem
 mvn verify                           # formats the sources, then runs every test
 mvn verify -Dquarkus.version=3.40.0  # the Quarkus minimum
 mvn verify -Dno-format               # checks the formatting instead of rewriting it, as CI does
+GRAALVM_HOME=<Mandrel or GraalVM> mvn verify -Dnative -pl integration-tests,integration-tests-minimal -am
 ```
+
+The end-to-end test also pulls `ghcr.io/alirux/tandem-relay` at the tag in `integration-tests-e2e`'s
+`tandem-relay.image.tag`. `mvn verify` regenerates the configuration tables under `docs/modules/ROOT/pages/includes/`
+from the mappings' javadoc; commit them with the change that moved them.
 
 `.github/workflows/quarkus-extension.yml` runs it on the Quarkus and JDK matrix, and natively (the
 `*IT` classes against the executables), whenever a change touches that directory.

@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # The Quarkus extension staged in extensions/quarkus-tandem (LLD-quarkus §14.3). Its Quarkus line is a branch
+  # decision, so only patch updates are proposed; com.codingful is its floor, which moves only by decision.
+  - package-ecosystem: maven
+    directory: /extensions/quarkus-tandem
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(quarkus)
+    ignore:
+      - dependency-name: "io.quarkus:*"
+        update-types: [ "version-update:semver-minor", "version-update:semver-major" ]
+      - dependency-name: "io.quarkus.platform:*"
+        update-types: [ "version-update:semver-minor", "version-update:semver-major" ]
+      - dependency-name: "com.codingful:*"

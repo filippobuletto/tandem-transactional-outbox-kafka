@@ -1,10 +1,11 @@
 # Tandem LLD: Quarkus write-side extension (`quarkus-tandem-producer`)
 
 **Version:** 0.1  
-**Status:** Being implemented in `extensions/quarkus-tandem` (staged until the Quarkiverse repository exists):
-`runtime`, `deployment`, `integration-tests-minimal`, and `integration-tests` with the tracing and payload
-scenarios are done, and CI runs them (`.github/workflows/quarkus-extension.yml`). The end-to-end module,
-the `docs` module and the release mechanics are still to come.
+**Status:** Implemented in `extensions/quarkus-tandem`, staged there until the Quarkiverse repository exists:
+every module of §2.1, the tests of §13, and the CI of §14.1 and §14.3
+(`.github/workflows/quarkus-extension.yml`, `.github/dependabot.yml`). Not yet done: the ecosystem CI
+(§14.2) and the release mechanics (§15.3, §15.4), which need the Quarkiverse repository, and the 1.0.0
+floor, which needs Tandem 1.0.0.
 First release scope only: the plain and template tiers.  
 **Implements:** [HLD-quarkus.md](HLD-quarkus.md) v0.4  
 **Companion to:** [LLD-spring-producer.md](LLD-spring-producer.md); [LLD-spring-config.md](LLD-spring-config.md) §2;
@@ -729,9 +730,7 @@ against the native executable. **`integration-tests-minimal`** depends on the ex
 | Upgrade of a migrated database, each route | `deployment`, `LiquibaseUpgradeTest`, `FlywayUpgradeTest` (§13.4) | no |
 | End to end with the `tandem-relay` image | `integration-tests-e2e`, `RelayEndToEndTest` (§13.5) | no |
 
-Class names above are the scenario groups; the methods carry the BDD names. Until `integration-tests`
-gains its tier and ordering endpoints, `PlainTierTest`, `TemplateTierTest` and `OrderingTest` run in the
-`deployment` module, on the JVM only. The JVM-only rows need an
+Class names above are the scenario groups; the methods carry the BDD names. The JVM-only rows need an
 application configured differently from `integration-tests`, and leaving them out of native mode is the
 risk HLD §12 accepts.
 

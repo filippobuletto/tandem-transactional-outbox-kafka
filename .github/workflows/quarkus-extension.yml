@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ main ]
     paths: [ 'extensions/quarkus-tandem/**', '.github/workflows/quarkus-extension.yml' ]
+  # Weekly, latest-tandem only: a new library release can break the extension with no change here.
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,6 +23,7 @@ defaults:
 
 jobs:
   jvm:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -45,6 +50,7 @@ jobs:
         run: mvn -B verify -Dno-format ${{ matrix.quarkus && format('-Dquarkus.version={0}', matrix.quarkus) || '' }}
 
   native:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -58,8 +64,40 @@ jobs:
       - uses: ./.github/actions/docker-hub-mirror
 
       # Built in the line's default Mandrel builder image, so this repository chooses no GraalVM version;
-      # the *IT classes then run against the executables.
+      # the *IT classes then run against the executables. The JVM tests ran in the jvm job: surefire runs
+      # none here, failsafe all.
       - name: Build native executables and run their tests
         run: >-
           mvn -B verify -Dno-format -Dnative -Dquarkus.native.container-build=true
+          -Dtest=None -Dsurefire.failIfNoSpecifiedTests=false
           -pl integration-tests,integration-tests-minimal -am
+
+  # The other end of the floor (LLD-quarkus §14.1): the build on the latest Tandem release on Maven Central.
+  # Not required: its failure is a regression of a library release, reported on the library.
+  latest-tandem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Find the latest Tandem release
+        id: tandem
+        run: |
+          latest=$(curl -fsSL https://repo1.maven.org/maven2/com/codingful/tandem-core/maven-metadata.xml \
+            | sed -n 's:.*<release>\(.*\)</release>.*:\1:p')
+          floor=$(mvn -B -q help:evaluate -Dexpression=tandem.version -DforceStdout -N)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "floor=$floor" >> "$GITHUB_OUTPUT"
+          echo "Tandem floor $floor, latest release $latest"
+
+      - uses: ./.github/actions/docker-hub-mirror
+        if: steps.tandem.outputs.latest != steps.tandem.outputs.floor
+
+      - name: Build and test on the latest release
+        if: steps.tandem.outputs.latest != steps.tandem.outputs.floor
+        run: mvn -B verify -Dno-format -Dtandem.version=${{ steps.tandem.outputs.latest }}
