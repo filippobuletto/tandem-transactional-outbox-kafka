@@ -126,6 +126,8 @@
                 </property>
             </activation>
             <modules>
+                <module>integration-tests</module>
+                <module>integration-tests-minimal</module>
             </modules>
         </profile>
     </profiles>
