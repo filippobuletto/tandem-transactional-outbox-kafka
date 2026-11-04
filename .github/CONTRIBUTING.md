@@ -32,6 +32,8 @@ request is merged.
   module at once.
 - **Go 1.25+**, only for [`tandem-cli`](../apps/tandem-cli/) — a separate toolchain and build, not part
   of `./gradlew check` (see below).
+- **Maven 3.8.6+**, only for the [Quarkus extension](../extensions/quarkus-tandem/) — a separate build,
+  not part of `./gradlew check` (see below).
 
 ## Building and testing
 
@@ -161,6 +163,18 @@ python3 hack/fake-admin-api.py 8080   # stays in the foreground
 ./bin/tandem-cli --base-url http://127.0.0.1:8080 relay status
 ```
 
+The Quarkus extension in `extensions/quarkus-tandem/` is a Maven build on `quarkiverse-parent`, also
+outside Gradle: it is staged here until it moves to its own Quarkiverse repository, and keeps that
+repository's build and formatting so the move changes no file (HLD-quarkus §7). It depends on the
+library by published coordinate, at the floor in its `tandem.version` property, never on the working
+tree. Build and test it from its directory, on JDK 17, with Docker running:
+
+```bash
+cd extensions/quarkus-tandem
+mvn verify                           # formats the sources, then runs every test
+mvn verify -Dquarkus.version=3.40.0  # the Quarkus minimum
+```
+
 ## Project layout
 
 Modules are grouped by role: `libs/` holds the published library modules, `apps/` the two
@@ -190,6 +204,7 @@ directory.
 | `tandem-benchmark` | Load-testing harness, not published. |
 | `tandem-coverage` | Aggregates JaCoCo coverage across modules for CI. |
 | [`site`](../site/) | **Not a Gradle module** — the source of [tandem.codingful.com](https://tandem.codingful.com): the landing page and the dereferenceable RFC 9457 problem-type pages the Admin API's error `type` URLs resolve to. Plain HTML/CSS, assembled by `site/build.sh` and deployed by `.github/workflows/pages.yml`; see [site/README.md](../site/README.md). |
+| [`quarkus-tandem`](../extensions/quarkus-tandem/) | **Maven**, not a Gradle module — the Quarkus write-side extension (`io.quarkiverse.tandem:quarkus-tandem-producer`), staged here until it moves to Quarkiverse. Depends on the library at a floor, versioned independently, not yet published; see [HLD-quarkus.md](../docs/HLD-quarkus.md) and [LLD-quarkus.md](../docs/LLD-quarkus.md). |
 | [`tandem-cli`](../apps/tandem-cli/) | **Go**, not a Gradle module — a command-line frontend over the Admin API. Its own `go.mod`, own tests (`go test ./...`), own release cadence (`cli-v<semver>`, not the library's `v<semver>`); see [LLD-cli.md](../docs/LLD-cli.md). |
 
 The Spring modules are compiled against Spring Boot 3.x with Spring `compileOnly`, and one artifact

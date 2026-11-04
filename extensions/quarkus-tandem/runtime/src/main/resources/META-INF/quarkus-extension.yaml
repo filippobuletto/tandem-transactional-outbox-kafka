@@ -1,0 +1,13 @@
+name: Tandem Producer
+description: Write events to the Tandem transactional outbox in the same JTA transaction as the business change
+metadata:
+  keywords:
+    - outbox
+    - transactional-outbox
+    - kafka
+    - postgresql
+  guide: https://docs.quarkiverse.io/quarkus-tandem/dev/index.html
+  categories:
+    - data
+    - messaging
+  status: experimental

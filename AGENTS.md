@@ -368,8 +368,9 @@ to depend on.
     `ci` (workflows and actions). No `chore`, no others.
   - **scope** is the component the change is about: the module name without `tandem-` (`core`, `jdbc`,
     `kafka`, `cloudevents`, `admin`, `micrometer`, `tracing-otel`, `rabbitmq`, `spring-producer`,
-    `spring-relay`, `test`, `bom`, `cli`, `relay`, `sample`, `sample-spring`, `sample-jpa`, `benchmark`, `coverage`), or,
-    for what lives outside a module, one of `schema`, `site`, `guide`, `deps`, `repo` (README, AGENTS,
+    `spring-relay`, `test`, `bom`, `cli`, `relay`, `sample`, `sample-spring`, `sample-jpa`, `benchmark`,
+    `coverage`, and `quarkus` for the Quarkus extension staged in `extensions/quarkus-tandem`), or, for
+    what lives outside a module, one of `schema`, `site`, `guide`, `deps`, `repo` (README, AGENTS,
     CONTRIBUTING, licensing and other repository-wide files). `relay` is the `apps/tandem-relay` image;
     the relay engine is `jdbc`. A change spanning modules takes the scope of the one that carries it; a
     design doc takes the scope of the component it describes (`docs(jdbc): …` for LLD-jdbc).

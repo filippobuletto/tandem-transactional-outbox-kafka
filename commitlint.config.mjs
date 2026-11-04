@@ -13,6 +13,8 @@ export default {
       'core', 'jdbc', 'kafka', 'cloudevents', 'admin', 'micrometer', 'tracing-otel', 'rabbitmq',
       'spring-producer', 'spring-relay', 'test', 'bom', 'cli', 'relay', 'sample', 'sample-spring',
       'sample-jpa', 'benchmark', 'coverage',
+      // The Quarkus extension, staged in extensions/quarkus-tandem until it moves to Quarkiverse.
+      'quarkus',
       // What lives outside a module.
       'schema', 'site', 'guide', 'deps', 'repo',
     ]],
